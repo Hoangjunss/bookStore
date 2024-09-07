@@ -71,7 +71,8 @@ CREATE TABLE `inventory` (
   `create_day` date DEFAULT NULL,
   `id_inventory_status` int(11) DEFAULT NULL,
   `total_price` bigint(20) DEFAULT NULL,
-  `total_quantity` int(11) DEFAULT NULL
+  `total_quantity` int(11) DEFAULT NULL,
+  `id_user` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -277,9 +278,14 @@ ALTER TABLE cart_details ADD CONSTRAINT fk_id_product FOREIGN KEY cart_details(i
 
 ALTER TABLE inventory ADD CONSTRAINT fk_id_inventory_status FOREIGN KEY (id_inventory_status) REFERENCES inventory_status(id);
 
+ALTER TABLE inventory ADD CONSTRAINT fk_id_user_inventory FOREIGN KEY (id_user) REFERENCES user(id);
+
 ALTER TABLE inventory_details ADD CONSTRAINT fk_id_inventory FOREIGN KEY (id_inventory) REFERENCES inventory(id);
 
 ALTER TABLE inventory_details ADD CONSTRAINT fk_id_product_inventory_details FOREIGN KEY (id_product) REFERENCES product(id);
+
+ALTER TABLE orders ADD CONSTRAINT fk_id_user_orders FOREIGN KEY (id_user) REFERENCES user(id);
+
 
 ALTER TABLE order_detail ADD CONSTRAINT fk_id_order FOREIGN KEY (id_order) REFERENCES orders(id);
 
