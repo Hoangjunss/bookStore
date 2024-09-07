@@ -1,19 +1,15 @@
-package com.nhom13.bookStore.model.inventory;
+package com.nhom13.bookStore.dto.inventory;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-@Entity
-public class InventoryStatus {
-    @Id
+public class InventoryStatusDTO {
     private Integer id;
     private String  name;
 }

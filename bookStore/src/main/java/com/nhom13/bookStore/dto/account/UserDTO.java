@@ -1,23 +1,19 @@
-package com.nhom13.bookStore.model.account;
+package com.nhom13.bookStore.dto.account;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-@Entity
-public class User {
-    @Id
+public class UserDTO {
     private Integer id;
     private String username;
     private String password;
     private String email;
     private String phone;
-    private Integer idRole;
+    private Integer idRole;   
 }

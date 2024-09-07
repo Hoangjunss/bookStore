@@ -1,7 +1,5 @@
-package com.nhom13.bookStore.model.order;
+package com.nhom13.bookStore.dto.order;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,16 +8,14 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-@Entity
-public class Orders {
-    @Id
+public class OrdersDTO {
     private Integer id;
     private Integer idUser;
     private LocalDate createDay;
-    private  Long totalPrice;
+    private Long totalPrice;
     private Integer totalQuantity;
     private Integer paymentStatus;
     private Integer idOrderStatus;
