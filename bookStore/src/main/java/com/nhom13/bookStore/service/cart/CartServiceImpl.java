@@ -1,7 +1,15 @@
 package com.nhom13.bookStore.service.cart;
 
+import com.nhom13.bookStore.exception.CustomException;
+import com.nhom13.bookStore.exception.Error;
+import lombok.extern.slf4j.Slf4j;
+import org.hibernate.annotations.NotFound;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.stereotype.Service;
 
 import com.nhom13.bookStore.dto.cart.CartDTO;
@@ -13,6 +21,7 @@ import java.util.stream.Collectors;
 import java.util.UUID;
 
 @Service
+@Slf4j
 public class CartServiceImpl implements CartService{
     @Autowired
     private CartRepository cartRepository;
@@ -43,26 +52,41 @@ public class CartServiceImpl implements CartService{
 
     // Save method to insert new Cart entity
     private Cart save(CartDTO cartDTO) {
-        Cart cart = Cart.builder()
-                .id(getGenerationId())
-                .idUser(cartDTO.getIdUser())
-                .totalQuantity(cartDTO.getTotalQuantity())
-                .totalPrice(cartDTO.getTotalPrice())
-                .build();
-        return cartRepository.save(cart);
+        try {
+            log.info("Saving Cart");
+            Cart cart = Cart.builder()
+                    .id(getGenerationId())
+                    .idUser(cartDTO.getIdUser())
+                    .totalQuantity(cartDTO.getTotalQuantity())
+                    .totalPrice(cartDTO.getTotalPrice())
+                    .build();
+            return cartRepository.save(cart);
+        } catch (DataIntegrityViolationException e) {
+            log.error("Save cart failed: {}", e.getMessage());
+            throw new CustomException(Error.MYSQL_VALIDATION_ERROR);
+        } catch (DataAccessResourceFailureException e) {
+            log.error("Database connection failure while save Cart: {}", e.getMessage());
+            throw new CustomException(Error.MYSQL_CONNECTION_FAILURE);
+        }
     }
 
     @Override
     public CartDTO findById(Integer id) {
+        log.info("Find Cart by id: {}", id);
         Cart cart = cartRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Cart not found"));
+                .orElseThrow(() -> new CustomException(Error.CART_NOT_FOUND));
         return convertToDTO(cart);
     }
 
     @Override
     public CartDTO findByIdCustomer(Integer idUser) {
-        Cart cart = cartRepository.findByIdUser(idUser);
-        return convertToDTO(cart);
+        try {
+            log.info("Find Cart by user id: {}", idUser);
+            Cart cart = cartRepository.findByIdUser(idUser);
+            return convertToDTO(cart);
+        } catch (DataAccessException e){
+            throw new CustomException(Error.DATABASE_ACCESS_ERROR);
+        }
     }
 
     @Override
@@ -72,16 +96,32 @@ public class CartServiceImpl implements CartService{
 
     @Override
     public CartDTO update(CartDTO cartDTO) {
-        return convertToDTO(
-            cartRepository
-            .save(
-                convertToModel(cartDTO)));
+        try {
+            log.info("Updating Cart id: {}", cartDTO.getId());
+            return convertToDTO(
+                    cartRepository
+                            .save(
+                                    convertToModel(cartDTO)));
+        } catch (DataIntegrityViolationException e) {
+            log.error("Update failed: {}", e.getMessage());
+            throw new CustomException(Error.MYSQL_VALIDATION_ERROR);
+        } catch (DataAccessResourceFailureException e) {
+            log.error("Database connection failure while update CartDetails: {}", e.getMessage());
+            throw new CustomException(Error.MYSQL_CONNECTION_FAILURE);
+        }
     }
 
     @Override
     public void delete(Integer id) {
-        Cart cart = convertToModel(findById(id));
-        cartRepository.delete(cart);
+        try {
+            Cart cart = convertToModel(findById(id));
+            cartRepository.delete(cart);
+        }  catch (DataIntegrityViolationException e) {
+            log.error("Delete failed: {}", e.getMessage());
+            throw new CustomException(Error.MYSQL_VALIDATION_ERROR);
+        } catch (DataAccessResourceFailureException e) {
+            log.error("Database connection failure while delete CartDetails: {}", e.getMessage());
+            throw new CustomException(Error.MYSQL_CONNECTION_FAILURE);
+        }
     }
-    
 }

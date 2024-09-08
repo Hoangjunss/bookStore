@@ -2,6 +2,8 @@ package com.nhom13.bookStore.service.order;
 
 import com.nhom13.bookStore.dto.order.OrderDetailsDTO;
 import com.nhom13.bookStore.dto.order.OrdersDTO;
+import com.nhom13.bookStore.exception.CustomException;
+import com.nhom13.bookStore.exception.Error;
 import com.nhom13.bookStore.model.cart.CartDetails;
 import com.nhom13.bookStore.model.order.OrderDetail;
 import com.nhom13.bookStore.model.order.Orders;
@@ -9,6 +11,8 @@ import com.nhom13.bookStore.repository.order.OrderDetailReposiroty;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -48,21 +52,31 @@ public class OrderDetailServiceImpl implements OrderDetailService{
 
     // Save method to insert or update OrderDetail entity
     private OrderDetail save(OrderDetailsDTO orderDetailsDTO) {
-        OrderDetail orderDetail = OrderDetail.builder()
-                .id(orderDetailsDTO.getId() == null ? generateId() : orderDetailsDTO.getId())  // Generate ID if null
-                .priceProduct(orderDetailsDTO.getPriceProduct())
-                .totalPrice(orderDetailsDTO.getTotalPrice())
-                .idProduct(orderDetailsDTO.getIdProduct())
-                .quantity(orderDetailsDTO.getQuantity())
-                .idOrder(orderDetailsDTO.getIdOrder())
-                .build();
-        return orderDetailReposiroty.save(orderDetail);
+        try {
+            log.info("Saving OrderDetail");
+            OrderDetail orderDetail = OrderDetail.builder()
+                    .id(orderDetailsDTO.getId() == null ? generateId() : orderDetailsDTO.getId())  // Generate ID if null
+                    .priceProduct(orderDetailsDTO.getPriceProduct())
+                    .totalPrice(orderDetailsDTO.getTotalPrice())
+                    .idProduct(orderDetailsDTO.getIdProduct())
+                    .quantity(orderDetailsDTO.getQuantity())
+                    .idOrder(orderDetailsDTO.getIdOrder())
+                    .build();
+            return orderDetailReposiroty.save(orderDetail);
+        } catch (DataIntegrityViolationException e) {
+            log.error("Save order details failed: {}", e.getMessage());
+            throw new CustomException(Error.MYSQL_VALIDATION_ERROR);
+        } catch (DataAccessResourceFailureException e) {
+            log.error("Database connection failure while save order details: {}", e.getMessage());
+            throw new CustomException(Error.MYSQL_CONNECTION_FAILURE);
+        }
     }
 
     @Override
     public OrderDetailsDTO findById(Integer id) {
+        log.info("Find order detail by id: {}", id);
         OrderDetail orderDetail = orderDetailReposiroty.findById(id)
-                .orElseThrow(() -> new RuntimeException("Order detail not found"));
+                .orElseThrow(() -> new CustomException(Error.ORDER_DETAILS_NOT_FOUND));
         return convertToDTO(orderDetail);
     }
 
@@ -74,19 +88,33 @@ public class OrderDetailServiceImpl implements OrderDetailService{
 
     @Override
     public OrderDetailsDTO update(OrderDetailsDTO orderDetailsDTO) {
-        // Ensure the order detail exists before updating
-        orderDetailReposiroty.findById(orderDetailsDTO.getId())
-                .orElseThrow(() -> new RuntimeException("Order detail not found"));
-
-        OrderDetail updatedOrderDetail = save(orderDetailsDTO);
-        return convertToDTO(updatedOrderDetail);
+        try {
+            log.info("Updating order details with id: {}", orderDetailsDTO.getId());
+            orderDetailReposiroty.findById(orderDetailsDTO.getId());
+            OrderDetail updatedOrderDetail = save(orderDetailsDTO);
+            return convertToDTO(updatedOrderDetail);
+        } catch (DataIntegrityViolationException e) {
+            log.error("Update order details failed: {}", e.getMessage());
+            throw new CustomException(Error.MYSQL_VALIDATION_ERROR);
+        } catch (DataAccessResourceFailureException e) {
+            log.error("Database connection failure while update order details: {}", e.getMessage());
+            throw new CustomException(Error.MYSQL_CONNECTION_FAILURE);
+        }
     }
 
     @Override
     public void delete(Integer id) {
-        OrderDetail orderDetail = orderDetailReposiroty.findById(id)
-                .orElseThrow(() -> new RuntimeException("Order detail not found"));
-        orderDetailReposiroty.delete(orderDetail);
+        try {
+            log.info("Deleting order details with id: {}", id);
+            OrderDetailsDTO orderDetail = findById(id);
+            orderDetailReposiroty.deleteById(orderDetail.getId());
+        } catch (DataIntegrityViolationException e) {
+            log.error("Delete order details failed: {}", e.getMessage());
+            throw new CustomException(Error.MYSQL_VALIDATION_ERROR);
+        } catch (DataAccessResourceFailureException e) {
+            log.error("Database connection failure while delete order details: {}", e.getMessage());
+            throw new CustomException(Error.MYSQL_CONNECTION_FAILURE);
+        }
     }
 
     @Override

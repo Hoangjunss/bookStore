@@ -1,11 +1,15 @@
 package com.nhom13.bookStore.service.order;
 
 import com.nhom13.bookStore.dto.order.PaymentStatusDTO;
+import com.nhom13.bookStore.exception.CustomException;
+import com.nhom13.bookStore.exception.Error;
 import com.nhom13.bookStore.model.order.PaymentStatus;
 import com.nhom13.bookStore.repository.order.PaymentStatusRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -36,40 +40,68 @@ public class PaymentStatusServiceImpl implements  PaymentStatusService{
 
     // Save method to insert or update PaymentStatus entity
     private PaymentStatus save(PaymentStatusDTO paymentStatusDTO) {
-        PaymentStatus paymentStatus = PaymentStatus.builder()
-                .id(paymentStatusDTO.getId() == null ? generateId() : paymentStatusDTO.getId()) // Generate ID if null
-                .name(paymentStatusDTO.getName())
-                .build();
-        return paymentStatusRepository.save(paymentStatus);
+        try {
+            PaymentStatus paymentStatus = PaymentStatus.builder()
+                    .id(paymentStatusDTO.getId() == null ? generateId() : paymentStatusDTO.getId()) // Generate ID if null
+                    .name(paymentStatusDTO.getName())
+                    .build();
+            return paymentStatusRepository.save(paymentStatus);
+        } catch (DataIntegrityViolationException e) {
+            log.error("Unable to save payment status: {}", e.getMessage());
+            throw new CustomException(Error.PAYMENT_STATUS_UNABLE_TO_SAVE);
+        } catch (DataAccessResourceFailureException e) {
+            log.error("Database connection failure while saving payment status: {}", e.getMessage());
+            throw new CustomException(Error.MYSQL_CONNECTION_FAILURE);
+        }
     }
 
     @Override
     public PaymentStatusDTO findById(Integer id) {
-        PaymentStatus paymentStatus = paymentStatusRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Payment status not found"));
-        return convertToDTO(paymentStatus);
+        try {
+            PaymentStatus paymentStatus = paymentStatusRepository.findById(id)
+                    .orElseThrow(() -> new CustomException(Error.PAYMENT_STATUS_NOT_FOUND));
+            return convertToDTO(paymentStatus);
+        } catch (CustomException e) {
+            log.error("Error finding payment status by id {}: {}", id, e.getMessage());
+            throw e; // Rethrow the custom exception to be handled by the caller
+        }
     }
 
     @Override
     public PaymentStatusDTO create(PaymentStatusDTO paymentStatusDTO) {
-        PaymentStatus savedPaymentStatus = save(paymentStatusDTO);
-        return convertToDTO(savedPaymentStatus);
+        try {
+            PaymentStatus savedPaymentStatus = save(paymentStatusDTO);
+            return convertToDTO(savedPaymentStatus);
+        } catch (CustomException e) {
+            log.error("Error creating payment status: {}", e.getMessage());
+            throw e; // Rethrow the custom exception to be handled by the caller
+        }
     }
 
     @Override
     public PaymentStatusDTO update(PaymentStatusDTO paymentStatusDTO) {
-        // Ensure the payment status exists before updating
-        paymentStatusRepository.findById(paymentStatusDTO.getId())
-                .orElseThrow(() -> new RuntimeException("Payment status not found"));
+        try {
+            // Ensure the payment status exists before updating
+            paymentStatusRepository.findById(paymentStatusDTO.getId())
+                    .orElseThrow(() -> new CustomException(Error.PAYMENT_STATUS_NOT_FOUND));
 
-        PaymentStatus updatedPaymentStatus = save(paymentStatusDTO);
-        return convertToDTO(updatedPaymentStatus);
+            PaymentStatus updatedPaymentStatus = save(paymentStatusDTO);
+            return convertToDTO(updatedPaymentStatus);
+        } catch (CustomException e) {
+            log.error("Error updating payment status: {}", e.getMessage());
+            throw e; // Rethrow the custom exception to be handled by the caller
+        }
     }
 
     @Override
     public void delete(Integer id) {
-        PaymentStatus paymentStatus = paymentStatusRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Payment status not found"));
-        paymentStatusRepository.delete(paymentStatus);
+        try {
+            PaymentStatus paymentStatus = paymentStatusRepository.findById(id)
+                    .orElseThrow(() -> new CustomException(Error.PAYMENT_STATUS_NOT_FOUND));
+            paymentStatusRepository.delete(paymentStatus);
+        } catch (CustomException e) {
+            log.error("Error deleting payment status by id {}: {}", id, e.getMessage());
+            throw e; // Rethrow the custom exception to be handled by the caller
+        }
     }
 }
