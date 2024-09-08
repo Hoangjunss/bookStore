@@ -5,6 +5,8 @@ import com.nhom13.bookStore.dto.cart.CartDetailsDTO;
 import com.nhom13.bookStore.dto.order.OrderDetailsDTO;
 import com.nhom13.bookStore.dto.order.OrdersDTO;
 import com.nhom13.bookStore.dto.product.ProductDTO;
+import com.nhom13.bookStore.exception.CustomException;
+import com.nhom13.bookStore.exception.Error;
 import com.nhom13.bookStore.model.cart.Cart;
 import com.nhom13.bookStore.model.order.OrderDetail;
 import com.nhom13.bookStore.model.order.Orders;
@@ -15,6 +17,8 @@ import com.nhom13.bookStore.service.cart.CartService;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -59,16 +63,25 @@ public class OrdersServiceImpl implements OrdersService{
 
     // Save method to insert or update Orders entity
     private Orders save(OrdersDTO ordersDTO) {
-        Orders orders = Orders.builder()
-                .id(ordersDTO.getId() == null ? generateId() : ordersDTO.getId())  // Generate ID if null
-                .idUser(ordersDTO.getIdUser())
-                .createDay(ordersDTO.getCreateDay())
-                .totalPrice(ordersDTO.getTotalPrice())
-                .totalQuantity(ordersDTO.getTotalQuantity())
-                .paymentStatus(ordersDTO.getPaymentStatus())
-                .idOrderStatus(ordersDTO.getIdOrderStatus())
-                .build();
-        return ordersRepository.save(orders);
+        try {
+            log.info("Saving Orders");
+            Orders orders = Orders.builder()
+                    .id(ordersDTO.getId() == null ? generateId() : ordersDTO.getId())  // Generate ID if null
+                    .idUser(ordersDTO.getIdUser())
+                    .createDay(ordersDTO.getCreateDay())
+                    .totalPrice(ordersDTO.getTotalPrice())
+                    .totalQuantity(ordersDTO.getTotalQuantity())
+                    .paymentStatus(ordersDTO.getPaymentStatus())
+                    .idOrderStatus(ordersDTO.getIdOrderStatus())
+                    .build();
+            return ordersRepository.save(orders);
+        }  catch (DataIntegrityViolationException e) {
+            log.error("Save order failed: {}", e.getMessage());
+            throw new CustomException(Error.MYSQL_VALIDATION_ERROR);
+        } catch (DataAccessResourceFailureException e) {
+            log.error("Database connection failure while save order: {}", e.getMessage());
+            throw new CustomException(Error.MYSQL_CONNECTION_FAILURE);
+        }
     }
     private OrdersDTO conventToOrder(CartDTO cartDTO){
         return  OrdersDTO.builder()
@@ -92,13 +105,15 @@ public class OrdersServiceImpl implements OrdersService{
     }
     @Override
     public OrdersDTO findById(Integer id) {
+        log.info("Find order by id: {}", id);
         Orders orders = ordersRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                .orElseThrow(() -> new CustomException(Error.ORDER_NOT_FOUND));
         return convertToDTO(orders);
     }
 
     @Override
     public List<OrdersDTO> findByIdUser(Integer idUser) {
+        log.info("Find all orders by idUser: {}", idUser);
         return convertToDtoList(ordersRepository.findByIdUser(idUser));
     }
 
@@ -114,19 +129,33 @@ public class OrdersServiceImpl implements OrdersService{
 
     @Override
     public OrdersDTO update(OrdersDTO ordersDTO) {
-        // Ensure the order exists before updating
-        ordersRepository.findById(ordersDTO.getId())
-                .orElseThrow(() -> new RuntimeException("Order not found"));
-
-        Orders updatedOrders = save(ordersDTO);
-        return convertToDTO(updatedOrders);
+        try {
+            log.info("Update order by id: {}", ordersDTO.getId());
+            ordersRepository.findById(ordersDTO.getId());
+            Orders updatedOrders = save(ordersDTO);
+            return convertToDTO(updatedOrders);
+        } catch (DataIntegrityViolationException e) {
+            log.error("Update order failed: {}", e.getMessage());
+            throw new CustomException(Error.MYSQL_VALIDATION_ERROR);
+        } catch (DataAccessResourceFailureException e) {
+            log.error("Database connection failure while update order: {}", e.getMessage());
+            throw new CustomException(Error.MYSQL_CONNECTION_FAILURE);
+        }
     }
 
     @Override
     public void delete(Integer id) {
-        Orders orders = ordersRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
-        ordersRepository.delete(orders);
+        try {
+            log.info("Delete order by id: {}", id);
+            OrdersDTO orders = findById(id);
+            ordersRepository.deleteById(orders.getId());
+        } catch (DataIntegrityViolationException e) {
+            log.error("Delete order failed: {}", e.getMessage());
+            throw new CustomException(Error.MYSQL_VALIDATION_ERROR);
+        } catch (DataAccessResourceFailureException e) {
+            log.error("Database connection failure while delete order: {}", e.getMessage());
+            throw new CustomException(Error.MYSQL_CONNECTION_FAILURE);
+        }
     }
 
     @Override

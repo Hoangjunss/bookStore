@@ -62,6 +62,7 @@ public class InventoryServiceImpl implements InventoryService{
     // Save method to insert or update Inventory entity
     private Inventory save(InventoryDTO inventoryDTO) {
         try {
+            log.info("Saving inventory");
             Inventory inventory = Inventory.builder()
                     .id(inventoryDTO.getId() == null ? generateId() : inventoryDTO.getId())  // Generate ID if null
                     .idUser(inventoryDTO.getIdUser())
@@ -101,6 +102,7 @@ public class InventoryServiceImpl implements InventoryService{
     }
     @Override
     public InventoryDTO findById(Integer id) {
+        log.info("Get inventory by id: {}", id);
         Inventory inventory = inventoryRepository.findById(id)
                 .orElseThrow(() -> new CustomException(Error.INVENTORY_NOT_FOUND));
         return convertToDTO(inventory);
@@ -119,6 +121,7 @@ public class InventoryServiceImpl implements InventoryService{
     @Override
     public InventoryDTO update(InventoryDTO inventoryDTO) {
         try {
+            log.info("Update inventory by id: {}", inventoryDTO.getId());
             // Ensure the inventory exists before updating
             InventoryDTO existingInventory = findById(inventoryDTO.getId());
             // Reuse save method to update the entity
@@ -136,6 +139,7 @@ public class InventoryServiceImpl implements InventoryService{
     @Override
     public void delete(Integer id) {
         try {
+            log.info("Delete inventory by id: {}", id);
             InventoryDTO inventory = findById(id);
             inventoryRepository.deleteById(inventory.getId());
         }catch (DataIntegrityViolationException e) {
