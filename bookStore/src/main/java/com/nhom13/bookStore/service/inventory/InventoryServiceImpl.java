@@ -1,11 +1,15 @@
 package com.nhom13.bookStore.service.inventory;
 
 import com.nhom13.bookStore.dto.inventory.InventoryDTO;
+import com.nhom13.bookStore.exception.CustomException;
+import com.nhom13.bookStore.exception.Error;
 import com.nhom13.bookStore.model.inventory.Inventory;
 import com.nhom13.bookStore.repository.inventory.InventoryRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -36,21 +40,29 @@ public class InventoryServiceImpl implements InventoryService{
 
     // Save method to insert or update Inventory entity
     private Inventory save(InventoryDTO inventoryDTO) {
-        Inventory inventory = Inventory.builder()
-                .id(inventoryDTO.getId() == null ? generateId() : inventoryDTO.getId())  // Generate ID if null
-                .idUser(inventoryDTO.getIdUser())
-                .createDay(inventoryDTO.getCreateDay())
-                .totalPrice(inventoryDTO.getTotalPrice())
-                .totalQuantity(inventoryDTO.getTotalQuantity())
-                .idInventoryStatus(inventoryDTO.getIdInventoryStatus())
-                .build();
-        return inventoryRepository.save(inventory);
+        try {
+            Inventory inventory = Inventory.builder()
+                    .id(inventoryDTO.getId() == null ? generateId() : inventoryDTO.getId())  // Generate ID if null
+                    .idUser(inventoryDTO.getIdUser())
+                    .createDay(inventoryDTO.getCreateDay())
+                    .totalPrice(inventoryDTO.getTotalPrice())
+                    .totalQuantity(inventoryDTO.getTotalQuantity())
+                    .idInventoryStatus(inventoryDTO.getIdInventoryStatus())
+                    .build();
+            return inventoryRepository.save(inventory);
+        }  catch (DataIntegrityViolationException e) {
+            log.error("Save inventory failed: {}", e.getMessage());
+            throw new CustomException(Error.MYSQL_VALIDATION_ERROR);
+        } catch (DataAccessResourceFailureException e) {
+            log.error("Database connection failure while save inventory: {}", e.getMessage());
+            throw new CustomException(Error.MYSQL_CONNECTION_FAILURE);
+        }
     }
 
     @Override
     public InventoryDTO findById(Integer id) {
         Inventory inventory = inventoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Inventory not found"));
+                .orElseThrow(() -> new CustomException(Error.INVENTORY_NOT_FOUND));
         return convertToDTO(inventory);
     }
 
@@ -63,19 +75,32 @@ public class InventoryServiceImpl implements InventoryService{
 
     @Override
     public InventoryDTO update(InventoryDTO inventoryDTO) {
-        // Ensure the inventory exists before updating
-        Inventory existingInventory = inventoryRepository.findById(inventoryDTO.getId())
-                .orElseThrow(() -> new RuntimeException("Inventory not found"));
-
-        // Reuse save method to update the entity
-        Inventory updatedInventory = save(inventoryDTO);
-        return convertToDTO(updatedInventory);
+        try {
+            // Ensure the inventory exists before updating
+            InventoryDTO existingInventory = findById(inventoryDTO.getId());
+            // Reuse save method to update the entity
+            Inventory updatedInventory = save(inventoryDTO);
+            return convertToDTO(updatedInventory);
+        } catch (DataIntegrityViolationException e) {
+            log.error("Update inventory failed: {}", e.getMessage());
+            throw new CustomException(Error.MYSQL_VALIDATION_ERROR);
+        } catch (DataAccessResourceFailureException e) {
+            log.error("Database connection failure while update inventory: {}", e.getMessage());
+            throw new CustomException(Error.MYSQL_CONNECTION_FAILURE);
+        }
     }
 
     @Override
     public void delete(Integer id) {
-        Inventory inventory = inventoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Inventory not found"));
-        inventoryRepository.delete(inventory);
+        try {
+            InventoryDTO inventory = findById(id);
+            inventoryRepository.deleteById(inventory.getId());
+        }catch (DataIntegrityViolationException e) {
+            log.error("Delete inventory failed: {}", e.getMessage());
+            throw new CustomException(Error.MYSQL_VALIDATION_ERROR);
+        } catch (DataAccessResourceFailureException e) {
+            log.error("Database connection failure while delete inventory: {}", e.getMessage());
+            throw new CustomException(Error.MYSQL_CONNECTION_FAILURE);
+        }
     }
 }
