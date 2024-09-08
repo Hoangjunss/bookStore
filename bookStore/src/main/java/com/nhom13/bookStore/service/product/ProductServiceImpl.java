@@ -8,7 +8,9 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -26,6 +28,11 @@ public class ProductServiceImpl implements ProductService{
     // Convert ProductDTO to Product entity
     private Product convertToModel(ProductDTO productDTO) {
         return modelMapper.map(productDTO, Product.class);
+    }
+    public List<ProductDTO> convertToDtoList(List<Product> productList) {
+        return productList.stream()
+                .map(product -> modelMapper.map(product, ProductDTO.class))
+                .collect(Collectors.toList());
     }
 
     // Generate a unique ID for new products
@@ -79,5 +86,10 @@ public class ProductServiceImpl implements ProductService{
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
         productRepository.delete(product);
+    }
+
+    @Override
+    public List<ProductDTO> getAll() {
+        return convertToDtoList(productRepository.findAll());
     }
 }
