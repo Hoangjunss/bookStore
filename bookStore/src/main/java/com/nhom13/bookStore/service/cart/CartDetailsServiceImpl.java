@@ -155,8 +155,8 @@ public class CartDetailsServiceImpl implements CartDetailsService{
 
     @Override
     public List<CartDetailsDTO> getCartDetailsByIdCart(Integer id) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getCartDetailsByIdCart'");
+        List<CartDetails> cartDetailsList = cartDetailsRepository.findByIdCart(id);
+        return convertToDTOList(cartDetailsList);
     }
 
     // Cập nhật tổng tiền và số lượng của giỏ hàng
