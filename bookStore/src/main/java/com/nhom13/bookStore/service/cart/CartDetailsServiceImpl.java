@@ -36,6 +36,22 @@ public class CartDetailsServiceImpl implements CartDetailsService{
         return modelMapper.map(cartDetailsDTO, CartDetails.class);
     }
 
+    // Tính tổng tiền của giỏ hàng
+    private Long calculateTotalPrice(Integer idCart) {
+        List<CartDetailsDTO> cartDetailsList = getCartDetailsByIdCart(idCart);
+        if (cartDetailsList == null || cartDetailsList.isEmpty()) {
+            return 0L;
+        }
+        return cartDetailsList.stream().mapToLong(cd -> cd.getTotalPrice() != null ? cd.getTotalPrice() : 0L).sum();
+    }
+    private Integer calculateTotalQuality(Integer idCart) {
+        List<CartDetailsDTO> cartDetailsList = getCartDetailsByIdCart(idCart);
+        if (cartDetailsList == null || cartDetailsList.isEmpty()) {
+            return 0;
+        }
+        return cartDetailsList.stream().mapToInt(cd -> cd.getQuantity() != null ? cd.getQuantity() : 0).sum();
+    }
+
     // Convert List<CartDetails> to List<CartDetailsDTO>
     private List<CartDetailsDTO> convertToDTOList(List<CartDetails> cartDetailsList) {
         return cartDetailsList.stream()
@@ -72,25 +88,28 @@ public class CartDetailsServiceImpl implements CartDetailsService{
 
     @Override
     public CartDetailsDTO create(CartDetailsDTO cartDetailsDTO,Integer idUser) {
-        CartDTO cartDetails = cartService.findByIdCustomer(idUser);
-        if(cartDetails == null){
-            CartDTO cartDTO = CartDTO.builder()
+        CartDTO cartDTO = cartService.findByIdCustomer(idUser);
+        if(cartDTO == null){
+            CartDTO cartDTO1 = CartDTO.builder()
                 .id(getGenerationId())
                 .idUser(idUser)
+                .totalPrice(0L)
                 .build();
-            cartDetailsDTO.setIdCart(cartService.create(cartDTO).getId());
+            cartDetailsDTO.setIdCart(cartService.create(cartDTO1).getId());
         }
         else{
-            cartDetailsDTO.setIdCart(cartDetails.getId());
+            cartDetailsDTO.setIdCart(cartDTO.getId());
         }
-        return convertToDTO(save(cartDetailsDTO));
+        CartDetails savedCartDetails = save(cartDetailsDTO);
+        cartDTO.setTotalPrice(calculateTotalPrice(cartDetailsDTO.getIdCart()));
+        cartService.update(cartDTO);
+        return convertToDTO(savedCartDetails);
     }
 
     @Override   
     public CartDetailsDTO update(CartDetailsDTO cartDetailsDTO) {
-        return convertToDTO(
-            cartDetailsRepository.save(
-                convertToModel(cartDetailsDTO)));
+        updateCartTotal(cartDetailsDTO.getIdCart()); // Cập nhật tổng tiền và số lượng của giỏ hàng
+        return convertToDTO(cartDetailsRepository.save(convertToModel(cartDetailsDTO)));
     }
 
     @Override
@@ -104,6 +123,19 @@ public class CartDetailsServiceImpl implements CartDetailsService{
     public List<CartDetailsDTO> getCartDetailsByIdCart(Integer id) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getCartDetailsByIdCart'");
+    }
+
+    // Cập nhật tổng tiền và số lượng của giỏ hàng
+    public void updateCartTotal(Integer idCart) {
+        CartDTO cartDTO = cartService.findById(idCart);
+        if(cartDTO != null){
+            cartDTO.setTotalPrice(calculateTotalPrice(idCart));
+            cartDTO.setTotalQuantity(calculateTotalQuality(idCart));
+            cartService.update(cartDTO);
+        }
+        else{
+            log.error("Cart not found");
+        }
     }
     
 }

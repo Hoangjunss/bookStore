@@ -14,4 +14,5 @@ public interface CartDetailsService {
     void delete(Integer id);
     List<CartDetailsDTO> getCartDetailsByIdCart(Integer id);
 
+
 }
