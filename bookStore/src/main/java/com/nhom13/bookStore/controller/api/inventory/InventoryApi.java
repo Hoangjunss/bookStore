@@ -33,8 +33,6 @@ public class InventoryApi {
         return ResponseEntity.ok(new ApiResponse<>(true, "Update order successful", inventoryService.update(inventoryDTO)));
     }
 
-
-
     @GetMapping()
     public ResponseEntity<ApiResponse<List<InventoryDTO>>> getInventoryByIdUser(@RequestParam Integer idUser) {
         return ResponseEntity.ok(new ApiResponse<>(true, "Get order successful", inventoryService.findByIdUser(idUser)));

@@ -45,8 +45,5 @@ public class CartApi {
     public ResponseEntity<ApiResponse<CartDTO>> getCartByUser(@PathVariable("idUser") Integer id){
         return  ResponseEntity.ok(new ApiResponse<>(true, "Get cart by user successfully", cartService.findByIdCustomer(id)));
     }
-
-
-
     
 }
