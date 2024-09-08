@@ -9,8 +9,9 @@ import com.nhom13.bookStore.dto.cart.CartDetailsDTO;
 @Service
 public interface CartDetailsService {
     CartDetailsDTO findById(Integer id);
-    CartDetailsDTO create(CartDetailsDTO cartDetailsDTO);
+    CartDetailsDTO create(CartDetailsDTO cartDetailsDTO,Integer idUser);
     CartDetailsDTO update(CartDetailsDTO cartDetailsDTO);
     void delete(Integer id);
     List<CartDetailsDTO> getCartDetailsByIdCart(Integer id);
+
 }

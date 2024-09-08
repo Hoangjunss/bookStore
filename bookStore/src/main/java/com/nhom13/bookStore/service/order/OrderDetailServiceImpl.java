@@ -1,14 +1,19 @@
 package com.nhom13.bookStore.service.order;
 
 import com.nhom13.bookStore.dto.order.OrderDetailsDTO;
+import com.nhom13.bookStore.dto.order.OrdersDTO;
+import com.nhom13.bookStore.model.cart.CartDetails;
 import com.nhom13.bookStore.model.order.OrderDetail;
+import com.nhom13.bookStore.model.order.Orders;
 import com.nhom13.bookStore.repository.order.OrderDetailReposiroty;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -17,10 +22,17 @@ public class OrderDetailServiceImpl implements OrderDetailService{
     private OrderDetailReposiroty orderDetailReposiroty;
     @Autowired
     private ModelMapper modelMapper;
+    @Autowired
+    private OrdersService ordersService;
 
     // Convert OrderDetail entity to OrderDetailsDTO
     private OrderDetailsDTO convertToDTO(OrderDetail orderDetail) {
         return modelMapper.map(orderDetail, OrderDetailsDTO.class);
+    }
+    public List<OrderDetailsDTO> convertToDtoList(List<OrderDetailsDTO> ordersDetailsList) {
+        return ordersDetailsList.stream()
+                .map(product -> modelMapper.map(product, OrderDetailsDTO.class))
+                .collect(Collectors.toList());
     }
 
     // Convert OrderDetailsDTO to OrderDetail entity
@@ -75,5 +87,10 @@ public class OrderDetailServiceImpl implements OrderDetailService{
         OrderDetail orderDetail = orderDetailReposiroty.findById(id)
                 .orElseThrow(() -> new RuntimeException("Order detail not found"));
         orderDetailReposiroty.delete(orderDetail);
+    }
+
+    @Override
+    public List<OrderDetailsDTO> getAll(Integer id) {
+        return null;
     }
 }

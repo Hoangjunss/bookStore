@@ -10,6 +10,7 @@ import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
+import com.nhom13.bookStore.dto.cart.CartDTO;
 import com.nhom13.bookStore.dto.cart.CartDetailsDTO;
 import com.nhom13.bookStore.model.cart.CartDetails;
 import com.nhom13.bookStore.repository.cart.CartDetailRepository;
@@ -26,6 +27,8 @@ public class CartDetailsServiceImpl implements CartDetailsService{
     private CartDetailRepository cartDetailsRepository;
     @Autowired
     private ModelMapper modelMapper;
+    @Autowired
+    private CartService cartService;
     
     // Convert CartDetails entity to CartDetailsDTO
     private CartDetailsDTO convertToDTO(CartDetails cartDetails) {
@@ -82,12 +85,22 @@ public class CartDetailsServiceImpl implements CartDetailsService{
     }
 
     @Override
-    public CartDetailsDTO create(CartDetailsDTO cartDetailsDTO) {
-        return convertToDTO(
-            save(cartDetailsDTO));
+    public CartDetailsDTO create(CartDetailsDTO cartDetailsDTO,Integer idUser) {
+        CartDTO cartDetails = cartService.findByIdCustomer(idUser);
+        if(cartDetails == null){
+            CartDTO cartDTO = CartDTO.builder()
+                .id(getGenerationId())
+                .idUser(idUser)
+                .build();
+            cartDetailsDTO.setIdCart(cartService.create(cartDTO).getId());
+        }
+        else{
+            cartDetailsDTO.setIdCart(cartDetails.getId());
+        }
+        return convertToDTO(save(cartDetailsDTO));
     }
 
-    @Override
+    @Override   
     public CartDetailsDTO update(CartDetailsDTO cartDetailsDTO) {
         log.info("Update CartDetails id: {}", cartDetailsDTO.getId());
         try {
