@@ -19,9 +19,9 @@ public class CartApi {
     @Autowired
     private CartDetailsService cartDetailsService;
 
-    @PostMapping
-    public ResponseEntity<ApiResponse<CartDetailsDTO>> createCartDetail(@ModelAttribute CartDetailsDTO cartDetailsDTO,@RequestParam("idUser") Integer idUser){
-        return  ResponseEntity.ok(new ApiResponse<>(true, "Create cart detail successfully", cartDetailsService.create(cartDetailsDTO, idUser)));
+    @PostMapping("/createCartDetail")
+    public ResponseEntity<ApiResponse<CartDetailsDTO>> createCartDetail(@ModelAttribute CartDetailsDTO cartDetailsDTO){
+        return  ResponseEntity.ok(new ApiResponse<>(true, "Create cart detail successfully", cartDetailsService.create(cartDetailsDTO, 1)));
     }
 
     @PatchMapping

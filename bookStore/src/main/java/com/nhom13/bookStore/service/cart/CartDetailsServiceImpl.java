@@ -103,6 +103,7 @@ public class CartDetailsServiceImpl implements CartDetailsService{
     @Override
     public CartDetailsDTO create(CartDetailsDTO cartDetailsDTO,Integer idUser) {
         CartDTO cartDTO = cartService.findByIdCustomer(idUser);
+        log.info("Cart Detail: {}", cartDTO.toString());
         if(cartDTO == null){
             CartDTO cartDTO1 = CartDTO.builder()
                 .id(getGenerationId())

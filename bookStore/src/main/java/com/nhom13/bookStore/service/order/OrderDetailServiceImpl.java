@@ -26,14 +26,13 @@ public class OrderDetailServiceImpl implements OrderDetailService{
     private OrderDetailReposiroty orderDetailReposiroty;
     @Autowired
     private ModelMapper modelMapper;
-    @Autowired
-    private OrdersService ordersService;
+  
 
     // Convert OrderDetail entity to OrderDetailsDTO
     private OrderDetailsDTO convertToDTO(OrderDetail orderDetail) {
         return modelMapper.map(orderDetail, OrderDetailsDTO.class);
     }
-    public List<OrderDetailsDTO> convertToDtoList(List<OrderDetailsDTO> ordersDetailsList) {
+    public List<OrderDetailsDTO> convertToDtoList(List<OrderDetail> ordersDetailsList) {
         return ordersDetailsList.stream()
                 .map(product -> modelMapper.map(product, OrderDetailsDTO.class))
                 .collect(Collectors.toList());
@@ -119,6 +118,6 @@ public class OrderDetailServiceImpl implements OrderDetailService{
 
     @Override
     public List<OrderDetailsDTO> getAll(Integer id) {
-        return null;
+        return convertToDtoList(orderDetailReposiroty.findByIdOrder(id));
     }
 }

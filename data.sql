@@ -15,3 +15,7 @@ INSERT INTO category VALUES (1, 'horrified'),
                             (2, 'study'),
                             (3, 'comic')
 
+INSERT INTO `user` (id) VALUES (1) 
+
+INSERT INTO product (id, title, price) VALUES (1, "ABC", 10000)
+

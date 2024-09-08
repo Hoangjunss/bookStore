@@ -82,7 +82,7 @@ public class CartServiceImpl implements CartService{
     public CartDTO findByIdCustomer(Integer idUser) {
         try {
             log.info("Find Cart by user id: {}", idUser);
-            Cart cart = cartRepository.findByIdUser(idUser);
+            Cart cart = cartRepository.findByIdUser(idUser).get(0);
             return convertToDTO(cart);
         } catch (DataAccessException e){
             throw new CustomException(Error.DATABASE_ACCESS_ERROR);
