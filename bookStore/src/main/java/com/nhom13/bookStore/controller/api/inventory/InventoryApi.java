@@ -11,6 +11,7 @@ import com.nhom13.bookStore.service.order.OrdersService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,7 +30,7 @@ public class InventoryApi {
     }
 
     @PatchMapping
-    public ResponseEntity<ApiResponse<InventoryDTO>> updateInventory(@ModelAttribute @Valid InventoryDTO inventoryDTO) {
+    public ResponseEntity<ApiResponse<InventoryDTO>> updateInventory( @ModelAttribute @Valid InventoryDTO inventoryDTO) {
         return ResponseEntity.ok(new ApiResponse<>(true, "Update order successful", inventoryService.update(inventoryDTO)));
     }
 
