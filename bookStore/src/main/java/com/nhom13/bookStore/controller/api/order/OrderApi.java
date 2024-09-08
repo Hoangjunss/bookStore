@@ -36,4 +36,8 @@ public class OrderApi {
     public ResponseEntity<ApiResponse<List<OrdersDTO>>> getOrderByIdUser(@RequestParam Integer idUser) {
         return ResponseEntity.ok(new ApiResponse<>(true, "Get order successful", ordersService.findByIdUser(idUser)));
     }
+    @GetMapping("/orderdetail")
+    public ResponseEntity<ApiResponse<List<OrderDetailsDTO>>> getOrderDetailByIdOrder(@RequestParam Integer idOrder) {
+        return ResponseEntity.ok(new ApiResponse<>(true, "Get order successful", orderDetailService.getAll(idOrder)));
+    }
 }
