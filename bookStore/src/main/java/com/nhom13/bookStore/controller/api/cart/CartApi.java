@@ -20,12 +20,12 @@ public class CartApi {
     private CartDetailsService cartDetailsService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<CartDetailsDTO>> createCartDetail(@RequestBody CartDetailsDTO cartDetailsDTO,@RequestParam("idUser") Integer idUser){
+    public ResponseEntity<ApiResponse<CartDetailsDTO>> createCartDetail(@ModelAttribute CartDetailsDTO cartDetailsDTO,@RequestParam("idUser") Integer idUser){
         return  ResponseEntity.ok(new ApiResponse<>(true, "Create cart detail successfully", cartDetailsService.create(cartDetailsDTO, idUser)));
     }
 
     @PatchMapping
-    public ResponseEntity<ApiResponse<CartDetailsDTO>> updateCartDetail(@RequestBody CartDetailsDTO cartDetailsDTO){
+    public ResponseEntity<ApiResponse<CartDetailsDTO>> updateCartDetail(@ModelAttribute CartDetailsDTO cartDetailsDTO){
         return  ResponseEntity.ok(new ApiResponse<>(true, "Update cart detail successfully", cartDetailsService.update(cartDetailsDTO)));
     }
 
@@ -37,7 +37,7 @@ public class CartApi {
 
 
     @PostMapping
-    public ResponseEntity<ApiResponse<CartDTO>> createCart(@RequestBody CartDTO cartDTO){
+    public ResponseEntity<ApiResponse<CartDTO>> createCart(@ModelAttribute CartDTO cartDTO){
         return  ResponseEntity.ok(new ApiResponse<>(true, "Create cart successfully", cartService.create(cartDTO)));
     }
 
