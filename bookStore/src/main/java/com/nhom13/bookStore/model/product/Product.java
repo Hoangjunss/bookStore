@@ -26,4 +26,5 @@ public class Product {
     private  Long price_sale;
     private  Integer quantity;
     private Integer idCategory;
+    private  String url;
 }

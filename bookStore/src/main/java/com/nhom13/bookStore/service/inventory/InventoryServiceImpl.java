@@ -1,10 +1,16 @@
 package com.nhom13.bookStore.service.inventory;
 
+import com.nhom13.bookStore.dto.cart.CartDetailsDTO;
 import com.nhom13.bookStore.dto.inventory.InventoryDTO;
+import com.nhom13.bookStore.dto.inventory.InventoryDetailsDTO;
+import com.nhom13.bookStore.dto.order.OrderDetailsDTO;
+import com.nhom13.bookStore.dto.order.OrdersDTO;
 import com.nhom13.bookStore.exception.CustomException;
 import com.nhom13.bookStore.exception.Error;
 import com.nhom13.bookStore.model.inventory.Inventory;
 import com.nhom13.bookStore.repository.inventory.InventoryRepository;
+import com.nhom13.bookStore.service.order.OrderDetailService;
+import com.nhom13.bookStore.service.order.OrdersService;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +18,10 @@ import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -21,6 +30,12 @@ public class InventoryServiceImpl implements InventoryService{
     private InventoryRepository inventoryRepository;
     @Autowired
     private ModelMapper modelMapper;
+    @Autowired
+    private InventoryDetailService inventoryDetailService;
+    @Autowired
+    private OrdersService ordersService;
+    @Autowired
+    private OrderDetailService orderDetailService;
 
     // Convert Inventory entity to InventoryDTO
     private InventoryDTO convertToDTO(Inventory inventory) {
@@ -37,6 +52,12 @@ public class InventoryServiceImpl implements InventoryService{
         UUID uuid = UUID.randomUUID();
         return (int) (uuid.getMostSignificantBits() & 0xFFFFFFFFL);
     }
+    public List<InventoryDTO> convertToDtoList(List<Inventory> ordersDetailsList) {
+        return ordersDetailsList.stream()
+                .map(product -> modelMapper.map(product, InventoryDTO.class))
+                .collect(Collectors.toList());
+    }
+
 
     // Save method to insert or update Inventory entity
     private Inventory save(InventoryDTO inventoryDTO) {
@@ -44,7 +65,7 @@ public class InventoryServiceImpl implements InventoryService{
             Inventory inventory = Inventory.builder()
                     .id(inventoryDTO.getId() == null ? generateId() : inventoryDTO.getId())  // Generate ID if null
                     .idUser(inventoryDTO.getIdUser())
-                    .createDay(inventoryDTO.getCreateDay())
+                    .createDay(LocalDate.now())
                     .totalPrice(inventoryDTO.getTotalPrice())
                     .totalQuantity(inventoryDTO.getTotalQuantity())
                     .idInventoryStatus(inventoryDTO.getIdInventoryStatus())
@@ -58,7 +79,26 @@ public class InventoryServiceImpl implements InventoryService{
             throw new CustomException(Error.MYSQL_CONNECTION_FAILURE);
         }
     }
-
+    private InventoryDTO conventToInventory(OrdersDTO ordersDTO){
+        return InventoryDTO.builder()
+                .idUser(ordersDTO.getIdUser())
+                .totalPrice(ordersDTO.getTotalPrice())
+                .totalQuantity(ordersDTO.getTotalQuantity())
+                .build();
+    }
+    private List<InventoryDetailsDTO> conventToOrderDetailDTO(List<OrderDetailsDTO> orderDetailsDTOS, Integer idInventory){
+        return orderDetailsDTOS.stream()
+                .map(product ->
+                        inventoryDetailService.create( InventoryDetailsDTO.builder()
+                                .idInventory(idInventory)
+                                .idProduct(product.getIdProduct())
+                                .priceProduct(product.getPriceProduct())
+                                .totalPrice(product.getTotalPrice())
+                                .quantity(product.getQuantity())
+                                .build()
+                        ))
+                .collect(Collectors.toList());
+    }
     @Override
     public InventoryDTO findById(Integer id) {
         Inventory inventory = inventoryRepository.findById(id)
@@ -67,9 +107,12 @@ public class InventoryServiceImpl implements InventoryService{
     }
 
     @Override
-    public InventoryDTO create(InventoryDTO inventoryDTO) {
-        // Create a new inventory
+    public InventoryDTO create(Integer idOrder) {
+        OrdersDTO ordersDTO=ordersService.findById(idOrder);
+        InventoryDTO inventoryDTO=conventToInventory(ordersDTO);
         Inventory savedInventory = save(inventoryDTO);
+        List<OrderDetailsDTO> orderDetailsDTOS=orderDetailService.getAll(ordersDTO.getId());
+        conventToOrderDetailDTO(orderDetailsDTOS,savedInventory.getId());
         return convertToDTO(savedInventory);
     }
 
@@ -102,5 +145,10 @@ public class InventoryServiceImpl implements InventoryService{
             log.error("Database connection failure while delete inventory: {}", e.getMessage());
             throw new CustomException(Error.MYSQL_CONNECTION_FAILURE);
         }
+    }
+
+    @Override
+    public List<InventoryDTO> findByIdUser(Integer id) {
+        return convertToDtoList(inventoryRepository.findByIdUser(id));
     }
 }
