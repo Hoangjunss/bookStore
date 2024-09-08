@@ -8,8 +8,8 @@ import java.util.List;
 @Service
 public interface OrdersService {
     OrdersDTO findById(Integer id);
-    OrdersDTO findByIdUser(Integer idUser);
-    OrdersDTO create(OrdersDTO ordersDTO);
+    List<OrdersDTO> findByIdUser(Integer idUser);
+    OrdersDTO create(Integer idCart);
     OrdersDTO update(OrdersDTO ordersDTO);
     void delete(Integer id);
     List<OrdersDTO> getAll();

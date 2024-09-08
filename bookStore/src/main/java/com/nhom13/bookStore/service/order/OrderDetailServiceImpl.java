@@ -67,14 +67,7 @@ public class OrderDetailServiceImpl implements OrderDetailService{
     }
 
     @Override
-    public OrderDetailsDTO create(OrderDetailsDTO orderDetailsDTO,Integer idUser) {
-        OrdersDTO ordersDTO=ordersService.findByIdUser(idUser);
-        if(ordersDTO!=null){
-            orderDetailsDTO.setIdOrder(ordersDTO.getId());
-        }else {
-            OrdersDTO ordersDTO1= OrdersDTO.builder().idUser(idUser).build();
-            orderDetailsDTO.setIdOrder(ordersService.create(ordersDTO1).getId());
-        }
+    public OrderDetailsDTO create(OrderDetailsDTO orderDetailsDTO) {
         OrderDetail savedOrderDetail = save(orderDetailsDTO);
         return convertToDTO(savedOrderDetail);
     }

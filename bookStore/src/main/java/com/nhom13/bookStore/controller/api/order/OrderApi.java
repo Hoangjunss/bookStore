@@ -21,22 +21,19 @@ public class OrderApi {
     private OrderDetailService orderDetailService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<OrderDetailsDTO>> createOrderDetail(@ModelAttribute @Valid OrderDetailsDTO orderDetailDTO) {
-        return ResponseEntity.ok(new ApiResponse<>(true, "Create order successful", orderDetailService.create(orderDetailDTO)));
+    public ResponseEntity<ApiResponse<OrdersDTO>> createOrder(@RequestParam Integer idCart) {
+        return ResponseEntity.ok(new ApiResponse<>(true, "Create order successful", ordersService.create(idCart)));
     }
 
     @PatchMapping
-    public ResponseEntity<ApiResponse<OrderDetailsDTO>> updateOrder(@ModelAttribute @Valid OrderDetailsDTO orderDetailDTO) {
-        return ResponseEntity.ok(new ApiResponse<>(true, "Update order successful", orderDetailService.update(orderDetailDTO)));
+    public ResponseEntity<ApiResponse<OrdersDTO>> updateOrder(@ModelAttribute @Valid OrdersDTO orderDTO) {
+        return ResponseEntity.ok(new ApiResponse<>(true, "Update order successful", ordersService.update(orderDTO)));
     }
 
-    @GetMapping
-    public ResponseEntity<ApiResponse<List<OrderDetailsDTO>>> getAllOrders() {
-        return ResponseEntity.ok(new ApiResponse<>(true, "Get all orders successful", orderDetailService.getAll()));
-    }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<OrderDetailsDTO>> getOrderById(@PathVariable Integer id) {
-        return ResponseEntity.ok(new ApiResponse<>(true, "Get order successful", orderDetailService.findById(id)));
+
+    @GetMapping()
+    public ResponseEntity<ApiResponse<List<OrdersDTO>>> getOrderByIdUser(@RequestParam Integer idUser) {
+        return ResponseEntity.ok(new ApiResponse<>(true, "Get order successful", ordersService.findByIdUser(idUser)));
     }
 }

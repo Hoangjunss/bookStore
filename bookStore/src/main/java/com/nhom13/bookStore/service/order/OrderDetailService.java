@@ -8,7 +8,7 @@ import java.util.List;
 @Service
 public interface OrderDetailService {
     OrderDetailsDTO findById(Integer id);
-    OrderDetailsDTO create(OrderDetailsDTO orderDetailsDTO,Integer idUser);
+    OrderDetailsDTO create(OrderDetailsDTO orderDetailsDTO);
     OrderDetailsDTO update(OrderDetailsDTO orderDetailsDTO);
     void delete(Integer id);
     List<OrderDetailsDTO> getAll(Integer id);

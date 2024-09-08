@@ -13,4 +13,5 @@ public interface CartDetailsService {
     CartDetailsDTO update(CartDetailsDTO cartDetailsDTO);
     void delete(Integer id);
     List<CartDetailsDTO> getCartDetailsByIdCart(Integer id);
+
 }
